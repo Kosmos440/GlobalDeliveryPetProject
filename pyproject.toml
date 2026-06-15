@@ -1,0 +1,63 @@
+[project]
+name = "GlobalDelivery"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Kosmos"}
+]
+license = {text = "Kosmos"}
+requires-python = "==3.12.10"
+dependencies = [
+    "fastapi==0.136.3",
+    "uvicorn==0.49.0",
+    "starlette==1.2.1",
+    "sqlalchemy==2.0.50",
+    "asyncpg==0.31.0",
+    "alembic==1.18.4",
+    "redis==8.0.0",
+    "celery==5.6.3",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.14.1",
+    "python-dotenv==1.2.2",
+    "httpx==0.28.1",
+    "structlog==26.1.0",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest==9.0.3",
+    "pytest-asyncio==1.4.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["."]
+extend-exclude = [".venv", "venv", "GDVenv", "build", "dist", "__pycache__", "migrations"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"api/*.py" = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+files = ["app"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
