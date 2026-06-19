@@ -3,14 +3,14 @@ import structlog
 
 from app.core.config import settings
 from app.db.redis import cache_client
+from app.exceptions.integration import (
+    CbrRateBadResponseError,
+    CbrRateFetchError,
+    ExternalServiceException,
+)
 
 api_url = "https://www.cbr-xml-daily.ru/daily_json.js"
 logger = structlog.get_logger(__name__)
-
-
-class CbrRateFetchError(Exception):
-    """Не удалось получить курс USD от ЦБ."""
-
 
 async def get_usd_rate_from_cbr() -> float:
     try:
@@ -19,12 +19,15 @@ async def get_usd_rate_from_cbr() -> float:
             response.raise_for_status()
             data = response.json()
             return float(data["Valute"]["USD"]["Value"])
+    except httpx.TimeoutException as exc:
+        logger.exception("cbr.timeout", url=api_url)
+        raise CbrRateFetchError("CBR API request timed out") from exc
     except httpx.HTTPError as exc:
         logger.exception("cbr.http_error", url=api_url)
-        raise CbrRateFetchError("cbr.http_error") from exc
+        raise CbrRateFetchError("CBR API returned an error or is unreachable") from exc
     except (KeyError, TypeError, ValueError) as exc:
         logger.exception("cbr.invalid_response", url=api_url)
-        raise CbrRateFetchError("cbr.invalid_response") from exc
+        raise CbrRateBadResponseError("CBR API response format is invalid") from exc
 
 
 async def get_usd_rate() -> float:
@@ -36,7 +39,7 @@ async def get_usd_rate() -> float:
 
     try:
         rate = await get_usd_rate_from_cbr()
-    except CbrRateFetchError:
+    except ExternalServiceException:
         prev_rate = await cache_client.get("usd_rate_prev")
         if prev_rate:
             stale_rate = float(prev_rate.decode("utf-8"))

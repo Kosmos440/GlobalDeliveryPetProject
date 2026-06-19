@@ -12,6 +12,7 @@ def test_post(client, override_session):
         "category_name": "Электроника",
         "value_usd": "1200",
         "delivery_cost_rub": "1219",
+        "created_at": "2026-10-12T00:00:00",
     }
     package_data = {
         "name": "Телефон Iphone 17 pro max",
@@ -21,8 +22,11 @@ def test_post(client, override_session):
     }
     mock_dal = AsyncMock()
     mock_dal.create_package.return_value = make_package()
-    with patch("app.api.v1.routers.package.PackageDAL") as mock_dal_cls:
+    categories_mock_dal = AsyncMock()
+    categories_mock_dal.get_id_in_categories.return_value = True
+    with patch("app.services.package_service.PackageDAL") as mock_dal_cls, patch("app.services.package_service.PackageCategoryDAL") as categories_mock_cls:
         mock_dal_cls.return_value = mock_dal
+        categories_mock_cls.return_value = categories_mock_dal
         response = client.post("/api/v1/package/", json=package_data)
     assert response.status_code == 200
     assert response.json() == json_data

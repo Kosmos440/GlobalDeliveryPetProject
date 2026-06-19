@@ -12,6 +12,7 @@
 - **Celery** + **Celery Beat** — периодические задачи
 - **httpx** — асинхронные HTTP-запросы (получение курса ЦБ)
 - **Pydantic v2** — валидация данных
+- **uv** — менеджер пакетов и виртуальных окружений
 - **pytest** — тестирование
 
 ## Структура проекта
@@ -31,21 +32,37 @@ app/
 
 alembic/                # миграции БД
 tests/                  # тесты
-docker-compose.yml
+pyproject.toml          # зависимости и конфигурация инструментов
+uv.lock                 # версии зависимостей
+docker-compose-local.yaml
 Dockerfile
 .env.example
 ```
 
-## Запуск проекта
+## Локальная разработка
 
-### 1. Клонировать репозиторий
+### 1. Установить uv
+
+Если uv ещё не установлен на машине:
 
 ```bash
-git clone <repo_url>
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Для Linux/macOS:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 2. Клонировать репозиторий
+
+```bash
+git clone https://github.com/Kosmos440/GlobalDeliveryPetProject
 cd GlobalDeliveryPetProject
 ```
 
-### 2. Создать `.env` файл
+### 3. Создать `.env` файл
 
 Скопируй `.env.example` в `.env` и заполни значения:
 
@@ -53,15 +70,31 @@ cd GlobalDeliveryPetProject
 cp .env.example .env
 ```
 
-### 3. Запустить через Docker Compose
+### 4. Установить зависимости
 
 ```bash
-docker-compose up --build
+uv sync
+```
+
+Эта команда сама создаст виртуальное окружение `.venv` и установит все зависимости строго по `uv.lock`. Отдельно активировать окружение не обязательно — все команды ниже запускаются через `uv run`.
+
+### 5. Запустить сервис локально
+
+```bash
+uv run uvicorn app.main:app --reload
 ```
 
 Сервис будет доступен по адресу: `http://localhost:8000`
 
+## Запуск через Docker Compose
+
+```bash
+docker compose -f docker-compose-local.yaml up --build
+```
+
 Swagger-документация: `http://localhost:8000/docs`
+
+Фронтенд: `http://localhost:8000/ui`
 
 ## API эндпоинты
 
@@ -88,8 +121,16 @@ Swagger-документация: `http://localhost:8000/docs`
 
 ### Запуск задачи вручную (для отладки)
 
+В Docker:
+
 ```bash
-docker-compose exec celery celery -A app.tasks.celery_app call app.tasks.calculate_costs.calculate_delivery_costs
+docker compose -f docker-compose-local.yaml exec celery-worker celery -A app.tasks.celery_app call app.tasks.calculate_costs.calculate_delivery_costs
+```
+
+Локально:
+
+```bash
+uv run celery -A app.tasks.celery_app call app.tasks.calculate_costs.calculate_delivery_costs
 ```
 
 ## Миграции
@@ -97,20 +138,44 @@ docker-compose exec celery celery -A app.tasks.celery_app call app.tasks.calcula
 Применить миграции:
 
 ```bash
-docker-compose exec app alembic upgrade head
+# в Docker
+docker compose -f docker-compose-local.yaml exec fastapi alembic upgrade head
+
+# локально
+uv run alembic upgrade head
 ```
 
 Создать новую миграцию:
 
 ```bash
-docker-compose exec app alembic revision --autogenerate -m "description"
+uv run alembic revision --autogenerate -m "description"
 ```
 
 ## Тесты
 
 ```bash
-pytest -v
+uv run pytest -v
 ```
+
+## Линтинг и форматирование
+
+```bash
+uv run ruff check .
+uv run ruff format .
+uv run mypy
+```
+
+## Управление зависимостями
+
+```bash
+uv add <package>              # добавить зависимость
+uv add --dev <package>        # добавить dev-зависимость
+uv remove <package>           # удалить зависимость
+uv lock --upgrade             # обновить все версии в uv.lock до последних совместимых
+uv sync                       # переустановить окружение по uv.lock
+```
+
+`uv.lock` коммитится в git — он фиксирует точные версии зависимостей для воспроизводимых сборок у всех разработчиков и в CI/Docker. Файл `.venv/` в git не попадает, он указан в `.gitignore`.
 
 ## Переменные окружения
 

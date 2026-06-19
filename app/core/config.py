@@ -1,12 +1,17 @@
+import tomllib
 from pathlib import Path
+from typing import Any
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Any
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+def _project_meta() -> dict:
+    with (BASE_DIR / "pyproject.toml").open("rb") as f:
+        return tomllib.load(f)["project"]
+
+_meta = _project_meta()
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -18,8 +23,9 @@ class Settings(BaseSettings):
     )
 
     # Приложение
-    APP_NAME: str = "Global Delivery"
-    APP_VERSION: str = "0.1.0"
+    APP_NAME: str = _meta["name"]
+    APP_VERSION: str = _meta["version"]
+    APP_DESCRIPTION: str = _meta.get("description", "")
     DEBUG: bool
     API_PREFIX: str = "/api/v1"
 

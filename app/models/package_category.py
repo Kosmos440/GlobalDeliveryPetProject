@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.Base import Base
 
@@ -7,7 +6,7 @@ from app.db.Base import Base
 class Category(Base):
     __tablename__ = 'categories'
 
-    id = Column(Integer, primary_key=True)
-    category_name = Column(String, nullable=False, default="")
+    category_id: Mapped[int] = mapped_column(primary_key=True)
+    category_name: Mapped[str] = mapped_column(nullable=False, default="")
 
-    packages = relationship("Package", back_populates="category")
+    packages: Mapped["Package"] = relationship(back_populates="category")

@@ -1,7 +1,9 @@
 import uuid
+from datetime import datetime
+from decimal import Decimal
 
-from sqlalchemy import Column, ForeignKey, Integer, Numeric, String, UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey, Numeric, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.Base import Base
 
@@ -9,15 +11,17 @@ from app.db.Base import Base
 class Package(Base):
     __tablename__ = "packages"
 
-    package_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False)
-    weight = Column(Numeric(10, 3), nullable=False)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
-    value_usd = Column(Numeric(12, 2))
-    delivery_cost_rub = Column(Numeric(12, 2))
-    session_id = Column(UUID(as_uuid=True))
+    package_id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    name: Mapped[str]
+    weight: Mapped[Decimal] = mapped_column(Numeric(10, 3))
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.category_id"))
+    value_usd: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    delivery_cost_rub: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    session_id: Mapped[uuid.UUID | None]
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), server_onupdate=func.current_timestamp())
 
-    category = relationship("Category", back_populates="packages")
+    category: Mapped["Category"] = relationship(back_populates="packages")
 
     @property
     def category_name(self) -> str:

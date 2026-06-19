@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -38,6 +39,7 @@ def make_package(**kwargs):
         "category_name": "Электроника",
         "value_usd": Decimal("1200"),
         "delivery_cost_rub": Decimal("1219"),
+        "created_at": datetime(year=2026, month=10, day=12),
     }
     defaults.update(kwargs)
     return SimpleNamespace(**defaults)

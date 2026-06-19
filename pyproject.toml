@@ -1,12 +1,12 @@
 [project]
 name = "GlobalDelivery"
-version = "0.1.0"
-description = ""
+version = "0.1.1"
+description = "Микросервис для Службы международной доставки. Принимает данные о посылках, рассчитывает стоимость доставки на основе веса, стоимости содержимого и текущего курса доллара ЦБ РФ."
 authors = [
     {name = "Kosmos"}
 ]
-license = {text = "Kosmos"}
-requires-python = "==3.12.10"
+license = "MIT"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi==0.136.3",
     "uvicorn==0.49.0",
@@ -23,15 +23,18 @@ dependencies = [
     "structlog==26.1.0",
 ]
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
 [dependency-groups]
 dev = [
     "pytest==9.0.3",
     "pytest-asyncio==1.4.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "bandit",
+    "radon",
 ]
+
+[tool.uv]
+package = false
 
 [tool.ruff]
 line-length = 100
@@ -43,7 +46,7 @@ extend-exclude = [".venv", "venv", "GDVenv", "build", "dist", "__pycache__", "mi
 select = ["E4", "E7", "E9", "F", "W", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
-"api/*.py" = ["B008"]
+"app/api/**/*.py" = ["B008"]
 
 [tool.ruff.format]
 quote-style = "double"

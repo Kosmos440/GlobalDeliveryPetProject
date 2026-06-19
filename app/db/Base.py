@@ -1,5 +1,5 @@
-from sqlalchemy.orm import DeclarativeBase
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):

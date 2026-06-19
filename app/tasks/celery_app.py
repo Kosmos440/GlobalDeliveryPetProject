@@ -5,7 +5,6 @@ from celery.signals import worker_process_init
 from app.core.config import settings
 from app.core.logging import setup_logging
 
-
 celery_app = Celery(
     'delivery_app',
     broker=settings.REDIS_BROKER,
@@ -22,5 +21,5 @@ celery_app.conf.beat_schedule = {
 celery_app.conf.timezone = "UTC"
 
 @worker_process_init.connect
-def init_worker_logging(**kwargs):
+def init_worker_logging(**kwargs) -> None:
     setup_logging()

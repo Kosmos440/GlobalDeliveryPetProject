@@ -13,7 +13,6 @@ logger = structlog.get_logger(__name__)
 WEIGHT_FEE = Decimal("0.5")
 VALUE_FEE = Decimal("0.01")
 
-
 def _calculate_delivery_cost(weight: Decimal, value_usd: Decimal, rate: Decimal) -> Decimal:
     return (
         weight * WEIGHT_FEE + value_usd * VALUE_FEE
@@ -21,7 +20,7 @@ def _calculate_delivery_cost(weight: Decimal, value_usd: Decimal, rate: Decimal)
 
 
 @celery_app.task
-def calculate_delivery_cost():
+def calculate_delivery_cost() -> None:
     structlog.contextvars.clear_contextvars()
     structlog.contextvars.bind_contextvars(task="calculate_delivery_cost")
     try:
@@ -34,7 +33,7 @@ def calculate_delivery_cost():
 async def _calculate() -> None:
     async with get_session_ctx() as session:
         package_dal = PackageDAL(session)
-        packages = await package_dal.get_zero_packages()
+        packages = await package_dal.get_empty_packages()
         if not packages:
             logger.info("delivery_calculation.skipped", reason="no_packages")
             return

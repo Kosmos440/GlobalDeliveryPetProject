@@ -1,94 +1,89 @@
+from decimal import Decimal
 from uuid import UUID
 
-import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.openapi_responses import (
+    CATEGORY_NOT_FOUND_RESPONSE,
+    COMMON_ERROR_RESPONSES,
+    PACKAGE_NOT_FOUND_RESPONSE,
+)
 from app.core.session_manager import get_session_id
 from app.db.session import get_session
-from app.repositories.package import PackageDAL
-from app.schemas.package import PackageCreate, PackageRead, PackageList
+from app.schemas.package import PackageCreate, PackageList, PackageRead, PaginatedResponse
+from app.services.package_service import (
+    _create_new_package,
+    _get_package_by_id,
+    _get_packages_by_session,
+)
 
-logger = structlog.get_logger(__name__)
 package_router = APIRouter()
 
 @package_router.post(
     "/",
     response_model=PackageRead,
-    summary="Create a new package",
-    description="Create a new package.\nRequires name, weight, category_id, value in usd",
+    summary="Создать новую посылку",
+    description="Создать новую посылку.\nтребует name, weight, category_id, value в usd",
+    responses=CATEGORY_NOT_FOUND_RESPONSE | COMMON_ERROR_RESPONSES,
 )
 async def create_new_package(
         body: PackageCreate,
         session_id: UUID = Depends(get_session_id),
         session: AsyncSession = Depends(get_session)
 ) -> PackageRead:
-    package_dal = PackageDAL(session)
-    package = await package_dal.create_package(
-        name=body.name,
-        weight=body.weight,
-        category_id=body.category_id,
-        value_usd=body.value_usd,
-        session_id=session_id
-    )
-    logger.info("package.created", package_id=str(package.package_id))
-    return package
+
+    return await _create_new_package(session=session, session_id=session_id, body=body)
 
 
 @package_router.get(
-    "/", response_model=list[PackageList],
-    summary="Get all packages by session",
-    description="Get all packages by session.",
+    "/",
+    response_model=PaginatedResponse[PackageList],
+    summary="Получить все посылки этой сессии.",
+    description="Получить все посылки этой сессии.",
+    responses=COMMON_ERROR_RESPONSES,
 )
-async def get_package_by_session(
+async def get_packages_by_session(
         session_id: UUID = Depends(get_session_id),
         session: AsyncSession = Depends(get_session),
+        page: int = Query(1, gt=0, le=100, description="Номер страницы"),
+        size: int = Query(5, gt=0, description="Количество посылок на 1 странице"),
+        sort_by: str | None = Query(
+            None,
+            description="Поле сортировки. Префикс `-` — по убыванию. Пример: `-created_at`, `name`",
+        ),
+        search: str | None = Query(None, description="Поиск по названию"),
+        category_id: int | None = Query(None, description="Фильтр по ID категории"),
+        min_weight: Decimal | None = Query(None, description="Минимальный вес (кг)"),
+        max_weight: Decimal | None = Query(None, description="Максимальный вес (кг)"),
+        min_value: Decimal | None = Query(None, description="Минимальная цена (доллары)"),
+        max_value: Decimal | None = Query(None, description="Максимальная цена (доллары)"),
+    ) -> PaginatedResponse[PackageList]:
 
-    ) -> list[PackageList]:
-
-    package_dal = PackageDAL(session)
-    packages =  await package_dal.get_all_packages_by_session(session_id=session_id)
-
-    if not packages:
-        logger.warning(
-            "package.session.not_found",
-            session_id=str(session_id),
-        )
-        raise HTTPException(
-            status_code=404,
-            detail=f"Packages.not_found."
-        )
-    logger.info(
-        "package.session.listed",
-        session_id=str(session_id),
-        packages_count=len(packages),
+    return await _get_packages_by_session(
+        session=session,
+        session_id=session_id,
+        page=page,
+        size=size,
+        sort_by=sort_by,
+        search=search,
+        category_id=category_id,
+        min_weight=min_weight,
+        max_weight=max_weight,
+        min_value=min_value,
+        max_value=max_value,
     )
-    return packages
 
 
 @package_router.get(
     "/{package_id}", response_model=PackageRead,
-    summary="Get package by id",
-    description="Get all packages by session.",
+    summary="Получить посылку по id.",
+    description="Получить подробную информацию о посылке по uuid.",
+    responses=PACKAGE_NOT_FOUND_RESPONSE | COMMON_ERROR_RESPONSES,
 )
 async def get_package_by_id(
-        package_id: UUID | None = None,
+        package_id: UUID,
         session: AsyncSession = Depends(get_session)
     ) -> PackageRead:
-    package_dal = PackageDAL(session)
-    package = await package_dal.get_package_by_id(package_id=package_id)
 
-    if not package:
-        logger.warning(
-            "package.not_found",
-            package_id=str(package_id),
-        )
-        raise HTTPException(
-            status_code=404,
-            detail=f"Package.not_found."
-        )
-    logger.info(
-        "package.retrieved",
-        package_id=str(package.package_id),
-    )
-    return package
+    return await _get_package_by_id(session=session, package_id=package_id)

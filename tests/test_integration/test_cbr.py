@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from app.core.config import settings
-from app.integration.cbr import get_usd_rate, get_usd_rate_from_cbr, api_url, CbrRateFetchError
+from app.integration.cbr import CbrRateFetchError, api_url, get_usd_rate, get_usd_rate_from_cbr
 
 
 @pytest.mark.asyncio
@@ -65,9 +65,9 @@ async def test_get_usd_rate_from_cbr_http_error():
     mock_client = AsyncMock()
     mock_client.get.side_effect = httpx.ConnectError("connection refused")
     mock_client.__aenter__.return_value = mock_client
-    with patch("app.integration.cbr.httpx.AsyncClient", return_value=mock_client):
-        with pytest.raises(CbrRateFetchError):
-            await get_usd_rate_from_cbr()
+    with patch("app.integration.cbr.httpx.AsyncClient", return_value=mock_client), pytest.raises(CbrRateFetchError):
+        await get_usd_rate_from_cbr()
+
 
 @pytest.mark.asyncio
 async def test_get_usd_rate_uses_stale_on_cbr_failure():
