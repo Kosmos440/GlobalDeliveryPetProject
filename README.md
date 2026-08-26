@@ -58,8 +58,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ### 2. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/Kosmos440/GlobalDeliveryPetProject
-cd GlobalDeliveryPetProject
+git clone https://github.com/Kosmos440/GlobalDeliveryProject
+cd GlobalDeliveryProject
 ```
 
 ### 3. Создать `.env` файл
