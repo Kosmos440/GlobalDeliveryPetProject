@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlobalDelivery — Панель управления</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161922;
+    --border: #262b38;
+    --text: #e6e8ec;
+    --muted: #8a8f9c;
+    --accent: #4f8cff;
+    --accent-dim: #1e355e;
+    --danger: #ff6b6b;
+    --ok: #4caf7d;
+    --radius: 8px;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px;
+    font-size: 14px;
+  }
+
+  .wrap { max-width: 1200px; margin: 0 auto; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    margin: 0 0 24px;
+    font-size: 13px;
+  }
+
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 950px) {
+    .grid-layout { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+    height: max-content;
+  }
+
+  .card h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0 0 16px;
+    font-weight: 600;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .field:last-of-type { margin-bottom: 0; }
+
+  .field label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+
+  /* Стилизация сдвоенных инпутов диапазонов */
+  .range-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .range-container {
+    margin-bottom: 14px;
+  }
+  .range-slider-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .range-slider-box input[type="range"] {
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  input, select {
+    background: #0c0e13;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 13px;
+    width: 100%;
+    transition: border-color 0.15s ease;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  button {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  button:hover { background: var(--accent); }
+  button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  button.ghost {
+    background: transparent;
+    border-color: var(--border);
+    width: auto;
+  }
+  button.ghost:hover { border-color: var(--accent); background: #1c2130; }
+
+  /* Идеальное выравнивание элементов тулбара */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+
+  .toolbar .field {
+    margin-bottom: 0;
+  }
+
+  /* Блок диапазонных фильтров внутри панели сессии */
+  .range-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .range-toolbar .range-container {
+    flex: 1;
+    min-width: 220px;
+    margin-bottom: 0;
+  }
+
+  .range-toolbar-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    user-select: none;
+    background: #12151d;
+    transition: color 0.15s ease;
+  }
+  th:hover { color: var(--text); }
+
+  th .arrow { color: var(--accent); margin-left: 4px; font-size: 11px; }
+
+  tbody tr { transition: background 0.12s ease; cursor: pointer; }
+  tbody tr:hover { background: #1c202c; }
+
+  .id-badge {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: #0c0e13;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .cost-pending { color: var(--muted); font-style: italic; }
+  .cost-done { color: var(--ok); font-weight: 500; }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .pagination { display: flex; gap: 8px; align-items: center; }
+  .pagination button { padding: 6px 12px; }
+
+  .empty, .error { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .error { color: var(--danger); }
+
+  .msg { font-size: 12px; margin-top: 8px; min-height: 16px; font-weight: 500; }
+  .msg.ok { color: var(--ok); }
+  .msg.err { color: var(--danger); }
+
+  .search-result-box {
+    margin-top: 14px;
+    padding: 12px;
+    background: #0c0e13;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+  }
+  .search-result-box dl { display: grid; grid-template-columns: auto 1fr; gap: 8px; margin: 0; font-size: 13px; }
+  .search-result-box dt { color: var(--muted); }
+  .search-result-box dd { margin: 0; text-align: right; font-weight: 500; word-break: break-all; }
+
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(3px);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+  .modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .modal dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; margin: 0; }
+  .modal dt { color: var(--muted); font-size: 11px; text-transform: uppercase; align-self: center; }
+  .modal dd { margin: 0; font-size: 14px; text-align: right; font-weight: 500; }
+  .modal .close { margin-top: 24px; width: 100%; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>GlobalDelivery</h1>
+  <p class="subtitle">Система мониторинга и логистического менеджмента отправлений</p>
+
+  <div class="grid-layout">
+
+    <aside>
+      <div class="card">
+        <h2>Новая посылка</h2>
+        <form id="create-form">
+          <div class="field">
+            <label for="name">Название</label>
+            <input id="name" type="text" placeholder="Наименование предмета" required>
+          </div>
+          <div class="field">
+            <label for="category_id">Категория</label>
+            <select id="category_id" required>
+              <option value="" disabled selected>Загрузка категорий...</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="weight">Вес, кг</label>
+            <input id="weight" type="number" step="0.001" min="0.001" placeholder="0.000" required>
+          </div>
+          <div class="field">
+            <label for="value_usd">Ценность, $</label>
+            <input id="value_usd" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+          </div>
+          <button type="submit" style="margin-top: 8px;">Добавить в базу</button>
+          <div id="create-msg" class="msg"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Поиск по ID посылки</h2>
+        <form id="id-search-form">
+          <div class="field">
+            <label for="search_uuid">UUID посылки</label>
+            <input id="search_uuid" type="text" placeholder="Вставьте точный UUID..." required>
+          </div>
+          <button type="submit">Найти посылку</button>
+        </form>
+        <div id="id-search-status" class="msg"></div>
+        <div id="id-search-result" class="search-result-box" style="display: none;"></div>
+      </div>
+    </aside>
+
+    <main class="card">
+      <h2>Окно просмотра сессии</h2>
+
+      <div class="toolbar">
+        <div class="field" style="flex: 2; min-width: 180px;">
+          <label for="filter_search">Фильтр по названию</label>
+          <input id="filter_search" type="text" placeholder="Введите часть названия...">
+        </div>
+        <div class="field" style="flex: 1; min-width: 140px;">
+          <label for="filter_category">Категория</label>
+          <select id="filter_category">
+            <option value="">Все категории</option>
+          </select>
+        </div>
+        <div class="field" style="max-width: 90px;">
+          <label for="size">Лимит</label>
+          <select id="size">
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label> <button class="ghost" id="refresh-btn" type="button">Обновить</button>
+        </div>
+      </div>
+
+      <div class="range-toolbar">
+        <div class="range-container">
+          <div class="field">
+            <label>Вес (кг)</label>
+            <div class="range-inputs">
+              <input id="filter_min_weight" type="number" step="0.01" min="0" max="100" placeholder="От">
+              <input id="filter_max_weight" type="number" step="0.01" min="0" max="100" placeholder="До">
+            </div>
+            <div class="range-slider-box">
+              <input id="slider_min_weight" type="range" min="0" max="100" step="0.1" value="0">
+              <input id="slider_max_weight" type="range" min="0" max="100" step="0.1" value="100">
+            </div>
+          </div>
+        </div>
+
+        <div class="range-container">
+          <div class="field">
+            <label>Стоимость ($)</label>
+            <div class="range-inputs">
+              <input id="filter_min_value" type="number" step="1" min="0" max="10000" placeholder="От">
+              <input id="filter_max_value" type="number" step="1" min="0" max="10000" placeholder="До">
+            </div>
+            <div class="range-slider-box">
+              <input id="slider_min_value" type="range" min="0" max="10000" step="10" value="0">
+              <input id="slider_max_value" type="range" min="0" max="10000" step="10" value="10000">
+            </div>
+          </div>
+        </div>
+
+        <div class="range-toolbar-footer">
+          <button class="ghost" id="reset-ranges-btn" type="button">Сбросить вес/цену</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="package_id">ID Посылки<span class="arrow"></span></th>
+            <th data-sort="name">Название<span class="arrow"></span></th>
+            <th data-sort="category_name">Категория<span class="arrow"></span></th>
+            <th data-sort="weight">Вес<span class="arrow"></span></th>
+            <th data-sort="value_usd">Ценность<span class="arrow"></span></th>
+            <th data-sort="delivery_cost_rub">Доставка, ₽<span class="arrow"></span></th>
+            <th data-sort="created_at">Создана<span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="7" class="empty">Загрузка данных сессии...</td></tr>
+        </tbody>
+      </table>
+
+      <div class="footer">
+        <div id="page-info">Страница 1 из 1</div>
+        <div class="pagination">
+          <button class="ghost" id="prev-btn" type="button">← Назад</button>
+          <button class="ghost" id="next-btn" type="button">Вперёд →</button>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Спецификация отправления</h3>
+    <dl id="modal-body"></dl>
+    <button class="close" id="modal-close" type="button">Закрыть</button>
+  </div>
+</div>
+
+<script>
+const API_PREFIX = "/api/v1";
+
+const state = {
+  page: 1,
+  size: 10,
+  sort_by: "created_at",
+  search: "",
+  category_id: "",
+  min_weight: "",
+  max_weight: "",
+  min_value: "",
+  max_value: "",
+  total_pages: 1 // Храним общее число страниц из PaginatedResponse
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadCategories();
+  fetchSessionPackages();
+  setupEventListeners();
+  setupRangeFilters();
+});
+
+function setupEventListeners() {
+  // Навигация с учетом точного лимита страниц из бэкенда
+  document.getElementById("prev-btn").addEventListener("click", () => {
+    if (state.page > 1) { state.page -= 1; fetchSessionPackages(); }
+  });
+  document.getElementById("next-btn").addEventListener("click", () => {
+    if (state.page < state.total_pages) { state.page += 1; fetchSessionPackages(); }
+  });
+  document.getElementById("size").addEventListener("change", (e) => {
+    state.size = Number(e.target.value);
+    state.page = 1;
+    fetchSessionPackages();
+  });
+  document.getElementById("refresh-btn").addEventListener("click", fetchSessionPackages);
+
+  document.getElementById("filter_search").addEventListener("input", (e) => {
+    state.search = e.target.value.trim();
+    state.page = 1;
+    fetchSessionPackages();
+  });
+  document.getElementById("filter_category").addEventListener("change", (e) => {
+    state.category_id = e.target.value;
+    state.page = 1;
+    fetchSessionPackages();
+  });
+
+  document.querySelectorAll("th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const field = th.dataset.sort;
+      if (state.sort_by === field) state.sort_by = `-${field}`;
+      else state.sort_by = field;
+      state.page = 1;
+      fetchSessionPackages();
+    });
+  });
+
+  document.getElementById("id-search-form").addEventListener("submit", executeIdSearch);
+  document.getElementById("create-form").addEventListener("submit", createPackageSubmit);
+  document.getElementById("modal-close").addEventListener("click", () => document.getElementById("overlay").classList.remove("open"));
+}
+
+// Двусторонняя синхронизация "Ползунок <-> Числовое поле ввода"
+function setupRangeFilters() {
+  const configs = [
+    { num: "filter_min_weight", slider: "slider_min_weight", key: "min_weight" },
+    { num: "filter_max_weight", slider: "slider_max_weight", key: "max_weight" },
+    { num: "filter_min_value", slider: "slider_min_value", key: "min_value" },
+    { num: "filter_max_value", slider: "slider_max_value", key: "max_value" }
+  ];
+
+  configs.forEach(({ num, slider, key }) => {
+    const numEl = document.getElementById(num);
+    const sliderEl = document.getElementById(slider);
+    let debounceTimer = null;
+
+    // Ползунок двигается плавно — само значение и число обновляются мгновенно,
+    // а запрос к API уходит только через 350мс после того, как палец/курсор отпустили
+    sliderEl.addEventListener("input", (e) => {
+      numEl.value = e.target.value;
+      state[key] = e.target.value;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        state.page = 1;
+        fetchSessionPackages();
+      }, 350);
+    });
+
+    numEl.addEventListener("input", (e) => {
+      sliderEl.value = e.target.value || sliderEl.min;
+      state[key] = e.target.value;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        state.page = 1;
+        fetchSessionPackages();
+      }, 350);
+    });
+  });
+
+  // Кнопка быстрого сброса
+  document.getElementById("reset-ranges-btn").addEventListener("click", () => {
+    configs.forEach(({ num, key }) => {
+      document.getElementById(num).value = "";
+      state[key] = "";
+    });
+    document.getElementById("slider_min_weight").value = 0;
+    document.getElementById("slider_max_weight").value = 100;
+    document.getElementById("slider_min_value").value = 0;
+    document.getElementById("slider_max_value").value = 10000;
+    state.page = 1;
+    fetchSessionPackages();
+  });
+}
+
+async function loadCategories() {
+  const formSelect = document.getElementById("category_id");
+  const filterSelect = document.getElementById("filter_category");
+  try {
+    const res = await fetch(`${API_PREFIX}/categories/`, { credentials: "include" });
+    if (!res.ok) throw new Error();
+    const categories = await res.json();
+    const optionsHtml = categories.map(c => `<option value="${c.category_id}">${c.category_name}</option>`).join("");
+    formSelect.innerHTML = `<option value="" disabled selected>Выберите категорию</option>` + optionsHtml;
+    filterSelect.innerHTML = `<option value="">Все категории</option>` + optionsHtml;
+  } catch (err) {
+    formSelect.innerHTML = `<option value="">Не удалось загрузить категории</option>`;
+  }
+}
+
+// Запрос данных с поддержкой структуры PaginatedResponse и фильтрации диапазонов
+async function fetchSessionPackages() {
+  const tbody = document.getElementById("table-body");
+  tbody.innerHTML = `<tr><td colspan="7" class="empty">Загрузка данных сессии...</td></tr>`;
+
+  const params = new URLSearchParams({
+    page: state.page,
+    size: state.size,
+    sort_by: state.sort_by
+  });
+
+  if (state.search) params.append("search", state.search);
+  if (state.category_id) params.append("category_id", state.category_id);
+  if (state.min_weight) params.append("min_weight", state.min_weight);
+  if (state.max_weight) params.append("max_weight", state.max_weight);
+  if (state.min_value) params.append("min_value", state.min_value);
+  if (state.max_value) params.append("max_value", state.max_value);
+
+  try {
+    const res = await fetch(`${API_PREFIX}/package/?${params.toString()}`, { credentials: "include" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Читаем PaginatedResponse структуру
+    const paginatedResponse = await res.json();
+
+    // Обновляем метаданные страниц из бэкенда
+    state.total_pages = paginatedResponse.total_pages || 1;
+    state.page = paginatedResponse.current_page || 1;
+
+    renderSessionTable(paginatedResponse.packages || []);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" class="error">Ошибка сессии: ${err.message}</td></tr>`;
+  }
+
+  // Обновление интерфейса пагинации
+  document.getElementById("page-info").textContent = `Страница ${state.page} из ${state.total_pages}`;
+  document.getElementById("prev-btn").disabled = state.page <= 1;
+  document.getElementById("next-btn").disabled = state.page >= state.total_pages;
+
+  updateSortArrows();
+}
+
+function renderSessionTable(items) {
+  const tbody = document.getElementById("table-body");
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">В данной сессии посылок не найдено</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = items.map(pkg => `
+    <tr data-package-id="${pkg.package_id}">
+      <td><span class="id-badge">${pkg.package_id.substring(0,8)}...</span></td>
+      <td style="font-weight: 500;">${pkg.name}</td>
+      <td style="color: var(--muted);">${pkg.category_name ?? '—'}</td>
+      <td>${pkg.weight} кг</td>
+      <td>$${Number(pkg.value_usd).toFixed(2)}</td>
+      <td>${formatCost(pkg.delivery_cost_rub)}</td>
+      <td style="color: var(--muted); font-size: 13px;">${new Date(pkg.created_at).toLocaleDateString("ru-RU")}</td>
+    </tr>
+  `).join("");
+
+  tbody.querySelectorAll("tr[data-package-id]").forEach(row => {
+    row.addEventListener("click", () => openPackageDetails(row.dataset.packageId));
+  });
+}
+
+async function executeIdSearch(e) {
+  e.preventDefault();
+  const uuid = document.getElementById("search_uuid").value.trim();
+  const status = document.getElementById("id-search-status");
+  const resultBox = document.getElementById("id-search-result");
+
+  status.textContent = "Поиск...";
+  status.className = "msg";
+  resultBox.style.display = "none";
+
+  try {
+    const res = await fetch(`${API_PREFIX}/package/${uuid}`, { credentials: "include" });
+    if (res.status === 404) {
+      status.textContent = "Объект с данным ID не найден.";
+      status.className = "msg err";
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const pkg = await res.json();
+    status.textContent = "";
+    resultBox.innerHTML = buildPackageDetailsHtml(pkg);
+    resultBox.style.display = "block";
+  } catch (err) {
+    status.textContent = "Некорректный UUID или ошибка сети.";
+    status.className = "msg err";
+  }
+}
+
+// Единая разметка полной карточки посылки — используется и в поиске по ID, и в модальном окне
+function buildPackageDetailsHtml(pkg) {
+  return `
+    <dl>
+      <dt>ID посылки</dt><dd style="font-size: 11px; word-break: break-all;">${pkg.package_id}</dd>
+      <dt>Название</dt><dd>${pkg.name}</dd>
+      <dt>Категория</dt><dd>${pkg.category_name ?? "—"}</dd>
+      <dt>Масса нетто</dt><dd>${pkg.weight} кг</dd>
+      <dt>Ценность</dt><dd>$${Number(pkg.value_usd).toFixed(2)}</dd>
+      <dt>Доставка</dt><dd>${formatCost(pkg.delivery_cost_rub)}</dd>
+      <dt>Создана</dt><dd>${formatDateTime(pkg.created_at)}</dd>
+      ${pkg.updated_at ? `<dt>Обновлена</dt><dd>${formatDateTime(pkg.updated_at)}</dd>` : ""}
+    </dl>
+  `;
+}
+
+function formatDateTime(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("ru-RU");
+}
+
+function formatCost(value) {
+  if (value === "Не рассчитано" || value === null) return `<span class="cost-pending">ожидает расчета</span>`;
+  return `<span class="cost-done">${Number(value).toLocaleString("ru-RU")} ₽</span>`;
+}
+
+function updateSortArrows() {
+  document.querySelectorAll("th[data-sort]").forEach(th => {
+    const arrow = th.querySelector(".arrow");
+    const field = th.dataset.sort;
+    if (state.sort_by === field) arrow.textContent = " ↑";
+    else if (state.sort_by === `-${field}`) arrow.textContent = " ↓";
+    else arrow.textContent = "";
+  });
+}
+
+async function openPackageDetails(packageId) {
+  const body = document.getElementById("modal-body");
+  body.innerHTML = `<dt style="grid-column: 1/-1; text-align: center;">Чтение параметров...</dt>`;
+  document.getElementById("overlay").classList.add("open");
+
+  try {
+    const res = await fetch(`${API_PREFIX}/package/${packageId}`, { credentials: "include" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const pkg = await res.json();
+    body.innerHTML = `
+      <dt>ID посылки</dt><dd style="font-size: 11px; color: var(--muted); word-break: break-all;">${pkg.package_id}</dd>
+      <dt>Название</dt><dd>${pkg.name}</dd>
+      <dt>Категория</dt><dd>${pkg.category_name ?? "—"}</dd>
+      <dt>Масса нетто</dt><dd>${pkg.weight} кг</dd>
+      <dt>Ценность</dt><dd>$${Number(pkg.value_usd).toFixed(2)}</dd>
+      <dt>Доставка</dt><dd>${formatCost(pkg.delivery_cost_rub)}</dd>
+      <dt>Создана</dt><dd>${formatDateTime(pkg.created_at)}</dd>
+      ${pkg.updated_at ? `<dt>Обновлена</dt><dd>${formatDateTime(pkg.updated_at)}</dd>` : ""}
+    `;
+  } catch (err) {
+    body.innerHTML = `<dt class="error">Ошибка</dt><dd>Не удалось прочитать карточку</dd>`;
+  }
+}
+
+async function createPackageSubmit(e) {
+  e.preventDefault();
+  const msg = document.getElementById("create-msg");
+  msg.textContent = "Регистрация отправления...";
+  msg.className = "msg";
+
+  const payload = {
+    name: document.getElementById("name").value.trim(),
+    category_id: Number(document.getElementById("category_id").value),
+    weight: parseFloat(document.getElementById("weight").value),
+    value_usd: parseFloat(document.getElementById("value_usd").value),
+  };
+
+  try {
+    const res = await fetch(`${API_PREFIX}/package/`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("Сбой при сохранении");
+    msg.textContent = "Успешно добавлено!";
+    msg.className = "msg ok";
+    e.target.reset();
+    state.page = 1;
+    fetchSessionPackages();
+  } catch (err) {
+    msg.textContent = `Ошибка: ${err.message}`;
+    msg.className = "msg err";
+  }
+}
+</script>
+</body>
+</html>

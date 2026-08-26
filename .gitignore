@@ -1,0 +1,13 @@
+.env
+.env.docker
+.venv/
+__pycache__/
+GDVenv/
+*.pyc
+.idea/
+postgres_data/
+redis_data/
+*.log
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir

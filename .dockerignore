@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.env
+.env.docker
+.venv/
+.idea/
+.pytest_cache/
+.ruff_cache/
+.git/
+node_modules/
+*.log
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
